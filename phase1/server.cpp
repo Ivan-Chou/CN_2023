@@ -84,12 +84,15 @@ class Client{
     }
 
     ssize_t sock_recv(char* buf){
-        return recv(sock_fd, buf, strlen(buf), 0);
+        bzero(buf, MSG_BUFMAX * sizeof(char));
+        return recv(sock_fd, buf, (MSG_BUFMAX - 1) * sizeof(char), 0);
     }
 
-    // IO should be at here
     ssize_t sock_send(char* str){
-        return send(sock_fd, str, strlen(str), 0);
+        int len = strlen(str);
+        ssize_t ret = send(sock_fd, str, len * sizeof(char), 0);
+        if(str[len - 1] != '\n') send(sock_fd, "\n", 1, 0);
+        return ret;
     }
 };
 
