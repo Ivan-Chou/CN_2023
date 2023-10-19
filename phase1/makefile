@@ -1,8 +1,8 @@
 srun: ./svr_b
 	./svr_b
 
-crun: ./client_b
-	./client_b "ws3.csie.ntu.edu.tw:51966"
+crun: ./clnt_b
+	./clnt_b "ws3.csie.ntu.edu.tw:51966"
 
 svr_b: ./server.cpp
 	g++ -O2 -o svr_b ./server.cpp
