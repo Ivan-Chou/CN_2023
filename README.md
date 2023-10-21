@@ -10,9 +10,9 @@ Project of Computer Network 2023
 Then, please ```cd``` into the directory "CN_2023/phase1" : ```cd CN_2023 && cd phase1```<br/>
 
 ※ For other platforms, please use [docker][1]:
-> 1. ```cd``` into the directory "CN_2023"
-> 2. Build the dockerfile into image : ```cd ./phase1/Dockerfile && docker build -t cn2023_phase1 . && cd ../../```
-> 3. Start the containter : ```docker run -it --rm -v ./phase1:/phase1 cn2023_phase1```
+> 1. ```cd``` into the directory "CN_2023/phase1" : ```cd CN_2023 && cd phase1```
+> 2. Build the dockerfile into image : ```docker build -t cn2023_phase1 .```
+> 3. Start the containter : ```docker run -it --rm cn2023_phase1```
 
 ## Run the program
 Run ```make srun``` for running a server-end process. <br/>
