@@ -17,8 +17,12 @@ P.S. For Windows, please use Powershell.
 > 3. Start the containter : ```docker run -it --rm cn2023_phase1```
 
 ## Run the program
-Run ```make srun``` for running a server-end process. <br/>
-Or ```make crun``` for a clinet-end one.
+Run ```make srun``` for running a server-end process  
+> The server process will listen on port 51966.  
+  
+Or ```make crun``` for a client-end one.  
+> 1. The client-end process can only start after the server is on(or the process will just keep outputing something like ```socket(): connect() failed.```).
+> 2. The server is assumed to operate on "ws3.csie.ntu.edu.tw"(NTUCSIE workstation 3), which is my development environment since I don't have other convenient domain name. If you would like to use your own hosts for server, please modify the default value of "serverHostName" at ```clienttool.hpp --> class CLNT_Socket --> socket_init(serverHostName)``` to "(name of your host)".  
 
 # Personal profile website
 Inside "phase1/profile/".

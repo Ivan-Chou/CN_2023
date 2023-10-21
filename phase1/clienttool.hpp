@@ -67,6 +67,7 @@ class CLNT_Socket{
 
         if (connect(sock_fd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
             cerr << ErrMsg("socket_init()", "connect()");
+            cout << "\nOops! :(\n It seems like the server is not available currently. Maybe try again later or contact the owner of the server?\n\n";
             return 1;
         }
 
