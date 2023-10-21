@@ -11,7 +11,7 @@ Then, please ```cd``` into the directory "CN_2023/phase1" : ```cd CN_2023 && cd 
 
 ※ For other platforms, please use [docker][1]:
 > 1. ```cd``` into the directory "CN_2023"
-> 2. ```docker run -it --rm ./phase1:/phase1 cn2023_phase1.Dockerfile```
+> 2. ```docker run -it --rm -v ./phase1:/phase1 cn2023_phase1.Dockerfile```
 
 ## Run the program
 Run ```make srun``` for running a server-end process. <br/>

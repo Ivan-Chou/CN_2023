@@ -2,7 +2,7 @@ srun: ./svr_b
 	./svr_b
 
 crun: ./clnt_b
-	./clnt_b "ws3.csie.ntu.edu.tw:51966"
+	./clnt_b
 
 svr_b: ./server.cpp
 	g++ -O2 -o svr_b ./server.cpp
