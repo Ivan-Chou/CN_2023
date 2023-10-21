@@ -20,4 +20,7 @@ P.S. For Windows, please use Powershell.
 Run ```make srun``` for running a server-end process. <br/>
 Or ```make crun``` for a clinet-end one.
 
+# Personal profile website
+Inside "phase1/profile/".
+
 [1]: https://www.docker.com/get-started/
