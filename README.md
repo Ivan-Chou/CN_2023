@@ -18,7 +18,8 @@ P.S. For Windows, please use Powershell.
 
 ## Run the program
 Run ```make srun``` for running a server-end process  
-> The server process will listen on port 51966.  
+> 1. The server process will listen on port 51966.  
+> 2. To terminate the process, you may use Ctrl+C, or you can type "stop" in terminal.
   
 Or ```make crun``` for a client-end one.  
 > 1. The client-end process can only start after the server is on(or the process will just keep outputing something like ```socket(): connect() failed.```).
