@@ -6,6 +6,6 @@ COPY server.py /phase2/
 
 WORKDIR /phase2
 
-# ENTRYPOINT [ "python3" ]
+ENTRYPOINT [ "python3.11" ]
 
-# CMD ["./server.py"]
+CMD ["./server.py"]

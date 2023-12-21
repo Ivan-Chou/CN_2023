@@ -62,9 +62,7 @@ myHTTPmessage.PageHandlers.listHandlers()
 
 # func
 
-def client_conn(ClientInfo:tuple[socket.socket, str]):
-	
-	(ClientSock, ClientAddr) = ClientInfo
+def client_conn(ClientSock: socket.socket, ClientAddr: str): #ClientInfo:tuple[socket.socket, str]
 
 	print(f"<INFO> New connection from: {ClientAddr}")
 
@@ -145,7 +143,6 @@ if __name__ == "__main__": # main func
 				clnt = threading.Thread(target=client_conn, args=ServerSock.accept())
 				
 				clnt.start()
-				clnt.run()
 				
 				client_threads.append(clnt)
 
