@@ -2,10 +2,6 @@ FROM ubuntu:22.04
 
 RUN mkdir -p /phase2 && apt-get update && apt-get install -y python3.11
 
-COPY server.py /phase2/
-
 WORKDIR /phase2
 
-ENTRYPOINT [ "python3.11" ]
-
-CMD ["./server.py"]
+CMD ["./run.sh"]

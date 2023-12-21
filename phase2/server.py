@@ -107,7 +107,7 @@ def client_conn(ClientSock: socket.socket, ClientAddr: str): #ClientInfo:tuple[s
 
 	return
 
-def server_start(ServerAddr = "localhost"):
+def server_start(ServerAddr = "0.0.0.0"):
 	ServerSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 	ServerSock.bind((ServerAddr, SERVER_PORT))

@@ -16,6 +16,4 @@ services:
 
         volumes:
             # (src) : (dest)
-            - ./mylib:/phase2/mylib
-            - ./webpage:/phase2/webpage
-            # - ./log:/phase2/log
+            - "./:/phase2"
