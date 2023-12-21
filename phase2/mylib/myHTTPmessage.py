@@ -64,11 +64,14 @@ class myHTTPmessage:
 		else:
 			self.header[key] = value
 
-	def response(self, status="200", body=""):
+	def response(self, status="200", body="", type="str"):
 		# return binary string for http response
 
 		# consider to open the html files at here
-		body = gzip.compress(body.encode("utf-8"))
+		if(type == "bin"):
+			body = gzip.compress(body)
+		else:
+			body = gzip.compress(body.encode("utf-8"))
 
 		headers = "\n".join([f"{key}: {self.header[key]}" for key in self.header])
 
@@ -81,17 +84,54 @@ Content-Length: {len(body)}
 
 		return (res.encode("utf-8") + body)
 
-class defaultHandlers:
-	@staticmethod
-	def default_GET(request:dict, httpMSG:myHTTPmessage):
-		pass
-		target = request["target"].split("/")[-1]
-		if(""" has such file """):
-			return httpMSG.response(status="200", body="""Such file""")
+DefaultFileInfo = {
+	"css" : {
+		"location" : "./webpage/css/",
+		"Content-Type" : "text/css"
+	},
+	"js" : {
+		"location" : "./webpage/scripts/",
+		"Content-Type" : "text/javascript"
+	},
+	"html" : {
+		"location" : "./webpage/html/",
+		"Content-Type" : "text/javascript"
 
+	},
+	"ico" : {
+		"location" : "./webpage/icon/",
+		"Content-Type" : "image/ico"
+	}
+}
+
+class defaultHandlers:
 	@staticmethod
 	def response404(request:dict, httpMSG:myHTTPmessage):
 		return httpMSG.response(status="404", body="Such page is not founded")
+	
+	@staticmethod
+	def default_GET(request:dict, httpMSG:myHTTPmessage):
+		target = request["target"].split("/")[-1]
+
+		if(target[-1] == "?"):
+			# GET
+			pass
+		elif(target.split(".")[-1] in DefaultFileInfo):
+			# html, css, javascript or some other things
+			specificMSG = myHTTPmessage() 
+
+			FileExt = target.split(".")[-1]
+
+			body = ""
+
+			with open(DefaultFileInfo[FileExt]["location"] + target, mode="rb") as src:
+				body = src.read()
+
+			specificMSG.setHeader("Content-Type", DefaultFileInfo[FileExt]["Content-Type"])
+
+			return specificMSG.response(status="200", body=body, type="bin")
+		else:
+			return defaultHandlers.response404(request=request, httpMSG=httpMSG)
 
 class pageHandler:
 	""" the struct to store all the behavior to handle requests """
@@ -99,13 +139,18 @@ class pageHandler:
 	def __init__(self):
 		self.handlers = dict()
 
-		self.handlers["default"] = defaultHandlers.response404
+		self.handlers["default"] = defaultHandlers.default_GET
 
 	def register(self, route:str, handler):
 		self.handlers[ route ] = handler
 
 	def listHandlers(self):
-		print(self.handlers)
+		print("<INFO> Listing route handlers:\n")
+		
+		for ele in self.handlers:
+			print(f"route = \"{ele}\", handler name = \"{self.handlers[ele].__name__}\"")
+		
+		print("\n")
 
 	def routing(self, route:str):
 		if(route in self.handlers):

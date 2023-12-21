@@ -1,0 +1,26 @@
+#wrap {
+    display: flex;
+    
+    justify-content: center;
+    align-items: center;
+}
+
+#sidebar {
+    width: 20%;
+    height: fit-content;
+}
+
+#bulletin {
+    width: 80%;
+    height: fit-content;
+
+    background-color: rgb(217, 142, 2);
+}
+
+.login_form {
+    visibility: collapse;
+}
+
+.reg_form {
+    visibility: collapse;
+}

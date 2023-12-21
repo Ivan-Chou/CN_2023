@@ -50,11 +50,24 @@ def index(request, httpMSG:myHTTPmessage.myHTTPmessage):
 	else:
 		# error
 		return httpMSG.response(status="200", body=f"Invalid request method : {request['method']}")
-
 myHTTPmessage.PageHandlers.register("/", index)
 
 
-myHTTPmessage.PageHandlers.listHandlers()
+def register():
+	# sync. table
+	pass
+# myHTTPmessage.PageHandlers.register()
+
+def login():
+	# HTTP Set-Cookie header
+	pass
+# myHTTPmessage.PageHandlers.register()
+
+def meeting():
+	# Socket.io
+	pass
+# myHTTPmessage.PageHandlers.register()
+
 
 # ===============
 
@@ -121,7 +134,10 @@ def server_start(ServerAddr = "0.0.0.0"):
 
 if __name__ == "__main__": # main func
 	ServerSock = server_start()
-	
+
+	# check if handlers are correct
+	myHTTPmessage.PageHandlers.listHandlers()
+
 	# main thread should handle STDIN (for admin command) and server socket(accept new connections)
 	sel = selectors.DefaultSelector()
 
