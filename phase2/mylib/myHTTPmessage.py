@@ -13,7 +13,7 @@ def parseRequest(request):
 	# 1st line: http metadata
 	req_line0 = request[0].split(" ")
 	if(len(req_line0) != 3):
-		# totally empty packet is observed
+		# totally empty packet is observed => close connection
 		print(f"<EXCE> parseRequest(): request[0] --> {request[0]}")
 		ret["firstline"] = request[0]
 	else:
@@ -40,18 +40,6 @@ def parseRequest(request):
 	ret["body"] = "\n".join(request[ lineCnt : ])
 
 	return ret
-
-class pageHandler(object):
-	""" the struct to store all the behavior to handle requests"""
-
-	def __init__(self):
-		self.handlers = dict()
-
-	def register(self, route:str, handler):
-		self.handlers[ route ] = handler
-
-	def listHandlers(self):
-		print(self.handlers)
 
 class myHTTPmessage:
 	""" a simple wrapper for http response written by myself """
@@ -92,6 +80,38 @@ Content-Length: {len(body)}
 """
 
 		return (res.encode("utf-8") + body)
+
+class defaultHandlers:
+	@staticmethod
+	def default_GET(request:dict, httpMSG:myHTTPmessage):
+		pass
+		target = request["target"].split("/")[-1]
+		if(""" has such file """):
+			return httpMSG.response(status="200", body="""Such file""")
+
+	@staticmethod
+	def response404(request:dict, httpMSG:myHTTPmessage):
+		return httpMSG.response(status="404", body="Such page is not founded")
+
+class pageHandler:
+	""" the struct to store all the behavior to handle requests """
+
+	def __init__(self):
+		self.handlers = dict()
+
+		self.handlers["default"] = defaultHandlers.response404
+
+	def register(self, route:str, handler):
+		self.handlers[ route ] = handler
+
+	def listHandlers(self):
+		print(self.handlers)
+
+	def routing(self, route:str):
+		if(route in self.handlers):
+			return self.handlers[ route ]
+		else:
+			return self.handlers["default"]
 
 # =====================================================
 
