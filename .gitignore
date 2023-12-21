@@ -3,3 +3,5 @@
 phase*/*_b
 
 phase*/cp_webpage.sh
+
+phase*/mylib/__pycache__

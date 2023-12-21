@@ -1,0 +1,21 @@
+version: '3'
+services:
+    phase2:
+        stdin_open: true
+        
+        tty: true
+
+        build:
+            context: .
+            dockerfile: dockerfile
+
+        container_name: phase2
+
+        ports:
+            - "51966:51966"
+
+        volumes:
+            # (src) : (dest)
+            - ./mylib:/phase2/mylib
+            - ./webpage:/phase2/webpage
+            # - ./log:/phase2/log
