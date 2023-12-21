@@ -11,36 +11,33 @@
 	</head>
 
 	<body>
+		<h3>CAFE WEB</h3>
 		<div id="wrap">
 			<div id="sidebar">
-				<button id="login_btn" type="button">login</button>
-				<button id="reg_btn" type="button">register</button>
+				<form id="login_form" action="/" method="post">
+					<div id="ID_row">
+					    <span>ID: </span>
+					    <input type="text" id="ID">
+					</div>
+					
+					<div id="PW_row">
+					    <span>密碼: </span>
+					    <input type="password" id="PW">
+					</div>
+
+					<br/>
+
+					<div id="btns">
+						<button type="submit" id="login">登入</button>
+						<b>或</b>
+						<button type="submit" id="reg">註冊</button>
+					</div>
+
+				</form>
 			</div>
 			<div id="bulletin">
-				<form class="login_form" id="login_form" action="/" method="post">
-					<input type="text" class="login_form" id="login_ID"/>
-					<input type="text" class="login_form" id="login_pswd"/>
-					<button type="submit" class="login_form">登入</button>
-				</form>
-				
-				<form class="reg_form" id="reg_form" action="/" method="post">
-					<input class="reg_form" type="text" id="reg_ID"/>
-					<input class="reg_form" type="text" id="reg_pswd"/>
-					<button class="reg_form" type="submit">註冊</button>
-				</form>
-
 				<p id="board_empty">看起來空蕩蕩的...<a href="#">登入</a>來當第一個發表文章的人吧！</p>
 			</div>
 		</div>
-		<!-- <h3>Get test</h3>
-		<form action="/login" method="GET">
-			<button type="submit">LogIn(GET)</button>
-		</form>
-		<br/>
-		<h3>Post test</h3>
-		<form action="/" method="POST">
-			<input type="text" name="ID_PW"/>
-			<button type="submit">Submit(POST)</button>
-		</form> -->
 	</body>
 </html>

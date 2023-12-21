@@ -1,26 +1,123 @@
+body {
+    background-color:#a5922a
+}
+
+h3 {
+    height: 3vh;
+
+    text-align: center;
+
+    background-color:#b75109
+}
+
 #wrap {
     display: flex;
     
     justify-content: center;
     align-items: center;
+
+    width: 100%;
+    height: 90vh;
 }
 
 #sidebar {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: start;
+    align-content: center;
+    
     width: 20%;
-    height: fit-content;
+    height: 100%;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: start;
+    align-content: center;
+}
+
+#ID_row {
+    width: 100%;
+    
+    display: flex;
+    flex-direction: row;
+
+    justify-content:end;
+}
+
+#ID_row span {
+    width: 30%;
+    text-align: center;
+
+    background-color:#8a4703;
+
+    border: 1px solid black;
+}
+
+#ID_row input{
+    width: 70%;
+}
+
+#PW_row {
+    width: 100%;
+
+    display: flex;
+    flex-direction: row;
+
+    justify-content:end;
+}
+
+#PW_row span {
+    width: 30%;
+    text-align: center;
+
+    background-color:#8a4703;
+
+    border: 1px solid black;
+}
+
+#PW_row input{
+    width: 70%;
+}
+
+#btns {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-content: center;
+
+    width: 100%;
+}
+
+#btns button {
+    width: 100%;
+}
+
+#btns b {
+    width: 100%;
+
+    text-align: center;
 }
 
 #bulletin {
     width: 80%;
-    height: fit-content;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-content: center;
 
     background-color: rgb(217, 142, 2);
 }
 
-.login_form {
-    visibility: collapse;
-}
+#board_empty {
+    text-align: center;
 
-.reg_form {
-    visibility: collapse;
+    font-size: 26px;
 }
