@@ -4,4 +4,4 @@ RUN mkdir -p /phase2 && apt-get update && apt-get install -y python3.11
 
 WORKDIR /phase2
 
-CMD ["./run.sh"]
+CMD ["python3.11", "./server.py"]

@@ -1,12 +1,14 @@
 import datetime
 import gzip
+import json
+from mylib.myMutltithread import atomic_print
 
 def parseRequest(request):
 	# parse the request (utf-8) to a dictionary
 
 	request = request.split("\r\n")
 
-	# print(request)
+	# atomic_print(request)
 
 	ret = dict()
 
@@ -14,7 +16,7 @@ def parseRequest(request):
 	req_line0 = request[0].split(" ")
 	if(len(req_line0) != 3):
 		# totally empty packet is observed => close connection
-		print(f"<EXCE> parseRequest(): request[0] --> {request[0]}")
+		atomic_print(f"<EXCE> parseRequest(): request[0] --> {request[0]}")
 		ret["firstline"] = request[0]
 	else:
 		(ret["method"], ret["target"], ret["ver"]) = req_line0
@@ -31,7 +33,7 @@ def parseRequest(request):
 		ele = ele.split(": ")
 
 		if(len(ele) <= 1):
-			print(f"<EXCE> parseRequest(): ele --> {ele}")
+			atomic_print(f"<EXCE> parseRequest(): ele --> {ele}")
 			break
 
 		ret[ ele[0] ] = ele[1]
@@ -40,6 +42,21 @@ def parseRequest(request):
 	ret["body"] = "\n".join(request[ lineCnt : ])
 
 	return ret
+
+def parseRequestBody(ContentType: str, body: str) -> dict[str:str]:
+	res = dict()
+	
+	if(ContentType == "application/json"):
+		res = json.loads(body)
+	else:
+		res = dict([ele.split("=") for ele in body.split("&")])
+
+	return res
+
+def parseCookie(cookie:str):
+	return dict([ele.split("=") for ele in cookie.split(", ")])
+
+# =====================================================
 
 class myHTTPmessage:
 	""" a simple wrapper for http response written by myself """
@@ -145,12 +162,12 @@ class pageHandler:
 		self.handlers[ route ] = handler
 
 	def listHandlers(self):
-		print("<INFO> Listing route handlers:\n")
+		atomic_print("<INFO> Listing route handlers:\n")
 		
 		for ele in self.handlers:
-			print(f"route = \"{ele}\", handler name = \"{self.handlers[ele].__name__}\"")
+			atomic_print(f"route = \"{ele}\", handler name = \"{self.handlers[ele].__name__}\"")
 		
-		print("\n")
+		atomic_print("\n")
 
 	def routing(self, route:str):
 		if(route in self.handlers):
@@ -193,14 +210,14 @@ PageHandlers = pageHandler()
 
 # if __name__ == "__main__":
 
-# 	# print(f"{parseRequest(request=req_ex)}")
+# 	# atomic_print(f"{parseRequest(request=req_ex)}")
 
 # 	msg = myHTTPmessage()
 
 # 	msg.setHeader(key="cookie", value="hello")
 
-# 	print(f"{msg.response(status='200', body='ACK!')}")
+# 	atomic_print(f"{msg.response(status='200', body='ACK!')}")
 
 # 	msg.setHeader(key="cookie", value="/rm")
 
-# 	print(f"{msg.response(status='200', body='ACK!')}")
+# 	atomic_print(f"{msg.response(status='200', body='ACK!')}")

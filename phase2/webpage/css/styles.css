@@ -20,6 +20,10 @@ h3 {
     height: 90vh;
 }
 
+#wrap >* {
+    margin: 5px;
+}
+
 #sidebar {
     display: flex;
     flex-direction: column;
@@ -32,6 +36,8 @@ h3 {
 }
 
 form {
+    width: 100%;
+
     display: flex;
     flex-direction: column;
 
@@ -93,7 +99,7 @@ form {
     width: 100%;
 }
 
-#btns button {
+#btns input {
     width: 100%;
 }
 
@@ -101,6 +107,13 @@ form {
     width: 100%;
 
     text-align: center;
+}
+
+#notes {
+    width: 100%;
+
+    background-color: white;
+    border: 3px solid yellow;
 }
 
 #bulletin {

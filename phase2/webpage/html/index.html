@@ -17,22 +17,27 @@
 				<form id="login_form" action="/" method="post">
 					<div id="ID_row">
 					    <span>ID: </span>
-					    <input type="text" id="ID">
+					    <input type="text" name="ID" id="ID" pattern="^[\w_\-]{1,15}$"/>
 					</div>
 					
 					<div id="PW_row">
 					    <span>密碼: </span>
-					    <input type="password" id="PW">
+					    <input type="password" name="PW" id="PW" pattern="^[\w_\-]{1,15}$"/>
+					</div>
+
+					<div id="btns">
+						<button type="submit" id="login" name="act" value="login">登入</button>
+						<b>或</b>
+						<button type="button" id="reg" name="act" value="reg">註冊</button>
 					</div>
 
 					<br/>
 
-					<div id="btns">
-						<button type="submit" id="login">登入</button>
-						<b>或</b>
-						<button type="submit" id="reg">註冊</button>
+					<div id="notes">
+						<p>註冊格式：</p>
+						<p>ID：大小寫字母、數字、減號("-")、底線("_")，最多 15 字元</p>
+						<p>密碼：大小寫字母、數字，最多 15 字元</p>
 					</div>
-
 				</form>
 			</div>
 			<div id="bulletin">
