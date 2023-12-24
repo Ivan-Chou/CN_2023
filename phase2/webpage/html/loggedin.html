@@ -5,6 +5,10 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" lang="zh-tw">
 
 		<link rel="stylesheet" type="text/css" href="styles_in.css">
+		<link rel="stylesheet" type="text/css" href="styles_board.css">
+		<link rel="stylesheet" type="text/css" href="styles_postarea.css">
+		
+		<script type="text/javascript" src="script_board.js" defer></script>
 		<script type="text/javascript" src="script_in.js" defer></script>
 
 		<title>CAFE web</title>
@@ -14,21 +18,30 @@
 		<h3>Welcome to CAFE WEB, <span id="username">(username)<span></h3>
 		<div id="wrap">
 			<div id="sidebar">
-				<div class="func_button" id="bulletin">
+				<div class="func_button" id="btn_bulletin">
 					留言板
 				</div>
-				<div class="func_button" id="article">
+				<div class="func_button" id="btn_message">
 					發文
 				</div>
-				<div class="func_button" id="call">
+				<div class="func_button" id="btn_call">
 					電話/視訊
 				</div>
-				<form class="func_button" action="/loggedin" method="post">
+				<form class="func_button" id="btn_logout" action="/loggedin" method="post">
 					<button id="logout" type="submit" name="act" value="logout">登出</button>
 				</form>
 			</div>
 			<div id="display_board">
-				<p id="board_empty">看起來空蕩蕩的...<a href="#">登入</a>來當第一個發表文章的人吧！</p>
+				<div id="bulletin">
+					<p id="board_empty">看起來空蕩蕩的...<a href="#">登入</a>來當第一個發表文章的人吧！</p>
+				</div>
+
+				<div id="post_area">
+					<input type="text" id="post_content" placeholder="寫點什麼吧~"/>
+					<button type="button" id="post_submit">發文</button>
+				</div>
+
+				<div id="call_area">...</div>
 			</div>
 		</div>
 	</body>

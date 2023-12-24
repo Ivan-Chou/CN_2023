@@ -116,21 +116,16 @@ form {
     border: 3px solid yellow;
 }
 
-#bulletin {
+#display_board {
     width: 80%;
     height: 100%;
 
+    
     display: flex;
     flex-direction: column;
 
     justify-content: center;
-    align-content: center;
+    align-items: center;
 
     background-color: rgb(217, 142, 2);
-}
-
-#board_empty {
-    text-align: center;
-
-    font-size: 26px;
 }

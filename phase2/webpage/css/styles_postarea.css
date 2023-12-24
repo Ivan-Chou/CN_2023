@@ -1,0 +1,38 @@
+#post_area {
+    width: 80%;
+    height: 80%;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: rgb(0, 70, 0);
+
+    border: 3px solid rgba(136, 8, 8, 0.444)
+}
+
+#post_content {
+    width: 80%;
+    height: 80%;
+
+    font-size: 26px;
+
+    margin: 5px;
+}
+
+#post_submit {
+    width: 30%;
+    height: 10%;
+
+    font-size: 16px;
+
+    color: rgb(2, 205, 2);
+    background-color: gray;
+}
+
+#post_submit:hover {
+    color: gray;
+    background-color:rgb(2, 205, 2);
+}

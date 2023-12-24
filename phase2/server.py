@@ -33,6 +33,9 @@ RegisterTable:dict[str, dict[str, str]] = dict() # dict[username, dict[info, val
 lock_OnlineTable = threading.Lock()
 OnlineTable:dict[str, str] = dict() # dict[username, call_addr]
 
+lock_PostTable = threading.Lock()
+PostTable:list[dict[str, str]] = []
+
 # ===============
 
 # func
@@ -59,14 +62,12 @@ def client_conn(ClientSock: socket.socket, ClientAddr: str): #ClientInfo:tuple[s
 
 			req = myHTTPmessage.parseRequest(req_raw.decode(encoding="utf-8"))
 
-			toPrint = "\n".join([
+			myMutltithread.atomic_print("\n".join([
 				"\n # ============================================== # \n",
 				f"From {ClientAddr} received:\n",
 				"\n".join([f"{key}: {req[key]}" for key in req]),
 				"\n # ============================================== # \n"
-			])
-
-			myMutltithread.atomic_print(toPrint)
+			]))
 
 			# use PageHandler
 			ClientSock.sendall(myHTTPmessage.PageHandlers.routing(route=req["target"])(req))
@@ -130,18 +131,17 @@ def index(request:dict[str, str]):
 
 		with lock_RegisterTable:
 			if(post_val["act"] == "login"): # cookie name: Coffee
-				myMutltithread.atomic_print("<INFO> Get into post login")
 
 				if(post_val["ID"] in RegisterTable):
-					cookie_hash = getCookieHash(post_val["ID"], post_val["PW"])
-					
-					if ("Cookie" in request):
+					cookie_hash = ""
+
+					if(post_val["ID"] != "" and post_val["PW"] != ""):
+						cookie_hash = getCookieHash(post_val["ID"], post_val["PW"])
+					elif ("Cookie" in request):
 						clnt_cookies = myHTTPmessage.parseCookie(request["Cookie"])
 
 						if (COOKIE_NAME in clnt_cookies):
 							cookie_hash = clnt_cookies[COOKIE_NAME].split("-")[1]
-
-					myMutltithread.atomic_print(f"<INFO> cookie_hash = {cookie_hash}")
 					
 					if(cookie_hash == RegisterTable[ post_val["ID"] ]["hash"]):
 						# login success
@@ -180,8 +180,19 @@ def index(request:dict[str, str]):
 
 				httpMSG.setContentType("application/json")
 			
+			elif(post_val["act"] == "renew"):
+				# update to newest contents
+
+				# give the whole table to user
+				httpMSG.setContentType("application/json")
+
+				latest = int(post_val["latest"])
+
+				with lock_PostTable:
+					body = json.dumps((PostTable[latest:] if (latest < len(PostTable)) else []))
+
 			else:
-				body=f"Invalid ID & password submit: {post_val['act']}"
+				body=f"Invalid action: {post_val['act']}"
 
 	else:
 		# error
@@ -236,11 +247,28 @@ def loggedin(request:dict[str, str]):
 			httpMSG.setHeader({
 				"Location": "/"
 			})
+
+		if(post_val["act"] == "post"):
+			# publish a post
+
+			# record
+			with lock_PostTable:
+				PostTable.append({
+					"author": userID,
+					"time": myHTTPmessage.HTTPdate(),
+					"content" : post_val["post_content"]
+				})
+
+			# send ok
+			httpMSG.setContentType("application/json")
+
+			body = json.dumps({"post_stat": "ok"})
 	else:
 		body = f"Invalid request method: {request['method']}"
 	
 	return httpMSG.response(body=body)
 myHTTPmessage.PageHandlers.register("/loggedin", loggedin)
+
 
 def meeting():
 	# Socket.io
@@ -311,6 +339,14 @@ if __name__ == "__main__": # main func
 							"\n".join([f"{usr}: {OnlineTable[usr]}" for usr in OnlineTable]),
 							"\n # ============================================== # \n"
 						]))
+				elif(cmd == "showposts"):
+					with lock_PostTable:
+						myMutltithread.atomic_print("\n".join([
+							"\n # ============================================== # \n",
+							"<INFO> Showing Posts:\n",
+							"\n".join([f"Author: {post['author']}\nTime: {post['time']}\nContent: {post['content']}\n" for post in PostTable]),
+							"\n # ============================================== # \n"
+						]))
 				else:
 					myMutltithread.atomic_print(f"<ERR> Unknown command : {cmd}")
 
@@ -321,12 +357,8 @@ if __name__ == "__main__": # main func
 
 				client_threads.remove(conn)
 
-	# myMutltithread.atomic_print("<INFO> Server shutting down...")
-
 	for conn in client_threads:
 		conn.join()
-
-	# myMutltithread.atomic_print("<INFO> Threads all joined")
 
 	ServerSock.close()
 
