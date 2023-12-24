@@ -1,7 +1,12 @@
 import datetime
 import gzip
 import json
+import re
 from mylib.myMutltithread import atomic_print
+
+# =====================================================
+
+# func
 
 def parseRequest(request):
 	# parse the request (utf-8) to a dictionary
@@ -56,15 +61,14 @@ def parseRequestBody(ContentType: str, body: str) -> dict[str:str]:
 def parseCookie(cookie:str):
 	return dict([ele.split("=") for ele in cookie.split(", ")])
 
-# =====================================================
+def HTTPdate(later:float = 0.0):
+	return (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=later)).strftime("%a, %d %b %Y %H:%M:%S GMT")
 
-class myHTTPmessage:
-	""" a simple wrapper for http response written by myself """
+def rawHTTPResponse(status="200", default_header:dict={}, temp_header:dict={}, body=""):
+	"""return binary string for http response"""
 	
-	def __init__(self):
-		self.httpver = "1.1"
-		self.ContentType = "text/html;charset=UTF-8"
-		self.header = {
+	if(default_header == {}):
+		default_header = {
 			"Server"          : "None",
 			"Vary"            : "Accept-Encoding",
 			"Content-Encoding": "gzip",
@@ -73,27 +77,85 @@ class myHTTPmessage:
 			"Connection"      : "Keep-Alive"
 		}
 
-	def setHeader(self, key:str, value:str):
+	if(type(body) == bytes):
+		body = gzip.compress(body)
+	else:
+		body = gzip.compress(body.encode("utf-8"))
+
+	httpver = "1.1"
+
+	headers = default_header.update(temp_header)
+
+	headers = "\n".join([f"{key}: {headers[key]}" for key in headers])
+
+	res = f"""HTTP/{httpver} {status}
+Date: {HTTPdate()}
+Content-Length: {len(body)}
+{headers}
+
+"""
+
+	return (res.encode("utf-8") + body)
+
+def render_html(html_str:str, alternative:dict[str, str]):
+	"""
+	Render html file.
+	Find: "{{(something)}}" in html (like jinja).
+	Substitute that string according to alternative. 
+	"""
+
+	for ele in alternative:
+		html_str = alternative[ele].join(re.split(f"{{{{{ele}}}}}", html_str))
+
+	return html_str
+
+# =====================================================
+
+class myHTTPmessage:
+	""" a simple wrapper for http response written by myself """
+	
+	def __init__(self, status="200", init_header:dict[str, str]={}):
+		self.httpver = "1.1"
+		self.status = status
+		self.header = {
+			"Server"          : "None",
+			"Vary"            : "Accept-Encoding",
+			"Content-Encoding": "gzip",
+			"Content-Type"    : "text/html;charset=UTF-8",
+			"Keep-Alive"      : "timeout=5, max=100",
+			"Connection"      : "Keep-Alive"
+		}
+		if(init_header != {}):
+			atomic_print(f"<DEBUG> init_header not null : {init_header}")
+			self.header.update(init_header)
+
+	def setStatus(self, status:str):
+		self.status = status
+
+	def setHeader(self, newHeaders:dict[str,str]):
 		# append, remove
-		if(value == "/rm"):
-			if(key in self.header):
-				self.header.pop(key)
-		else:
-			self.header[key] = value
+		for key in newHeaders:
+			if(newHeaders[key] == "/rm"):
+				if(key in self.header):
+					self.header.pop(key)
+			else:
+				self.header[key] = newHeaders[key]
 
-	def response(self, status="200", body="", type="str"):
-		# return binary string for http response
+	def setContentType(self, ContentType:str):
+		self.setHeader({"Content-Type": ContentType})
 
-		# consider to open the html files at here
-		if(type == "bin"):
+	def response(self, body=""):
+		"""return binary string for http response"""
+
+		if(isinstance(body, bytes)):
 			body = gzip.compress(body)
 		else:
 			body = gzip.compress(body.encode("utf-8"))
 
 		headers = "\n".join([f"{key}: {self.header[key]}" for key in self.header])
 
-		res = f"""HTTP/{self.httpver} {status}
-Date: {datetime.datetime.now(datetime.timezone.utc).strftime("%a, %d %b %Y %H:%M:%S GMT")}
+		res = f"""HTTP/{self.httpver} {self.status}
+Date: {HTTPdate()}
 Content-Length: {len(body)}
 {headers}
 
@@ -101,54 +163,58 @@ Content-Length: {len(body)}
 
 		return (res.encode("utf-8") + body)
 
-DefaultFileInfo = {
-	"css" : {
-		"location" : "./webpage/css/",
-		"Content-Type" : "text/css"
-	},
-	"js" : {
-		"location" : "./webpage/scripts/",
-		"Content-Type" : "text/javascript"
+DefaultFileUtil:dict[str, dict[str, any]] = {
+	"plain" : {
+		"location" : "",
+		"response" : myHTTPmessage(init_header={"Content-Type" : "text/plain"})
 	},
 	"html" : {
 		"location" : "./webpage/html/",
-		"Content-Type" : "text/javascript"
-
+		"response" : myHTTPmessage()
+	},
+	"css" : {
+		"location" : "./webpage/css/",
+		"response" : myHTTPmessage(init_header={"Content-Type" : "text/css"})
+	},
+	"js" : {
+		"location" : "./webpage/scripts/",
+		"response" : myHTTPmessage(init_header={"Content-Type" : "text/javascript"})
 	},
 	"ico" : {
 		"location" : "./webpage/icon/",
-		"Content-Type" : "image/ico"
+		"response" : myHTTPmessage(init_header={"Content-Type" : "image/ico"})
+	},
+	"json" : {
+		"location" : "./webpage/json/",
+		"response" : myHTTPmessage(init_header={"Content-Type" : "application/json"})
 	}
 }
 
 class defaultHandlers:
 	@staticmethod
-	def response404(request:dict, httpMSG:myHTTPmessage):
-		return httpMSG.response(status="404", body="Such page is not founded")
+	def response404(request:dict[str,str]):
+		httpMSG = myHTTPmessage(status="404")
+		return httpMSG.response(body="Such page is not founded")
 	
 	@staticmethod
-	def default_GET(request:dict, httpMSG:myHTTPmessage):
+	def default_GET(request:dict[str,str]):
 		target = request["target"].split("/")[-1]
 
 		if(target[-1] == "?"):
 			# GET
 			pass
-		elif(target.split(".")[-1] in DefaultFileInfo):
+		elif(target.split(".")[-1] in DefaultFileUtil):
 			# html, css, javascript or some other things
-			specificMSG = myHTTPmessage() 
-
 			FileExt = target.split(".")[-1]
 
 			body = ""
 
-			with open(DefaultFileInfo[FileExt]["location"] + target, mode="rb") as src:
+			with open(DefaultFileUtil[FileExt]["location"] + target, mode="rb") as src:
 				body = src.read()
 
-			specificMSG.setHeader("Content-Type", DefaultFileInfo[FileExt]["Content-Type"])
-
-			return specificMSG.response(status="200", body=body, type="bin")
+			return DefaultFileUtil[FileExt]["response"].response(body=body)
 		else:
-			return defaultHandlers.response404(request=request, httpMSG=httpMSG)
+			return defaultHandlers.response404(request=request)
 
 class pageHandler:
 	""" the struct to store all the behavior to handle requests """
@@ -162,12 +228,11 @@ class pageHandler:
 		self.handlers[ route ] = handler
 
 	def listHandlers(self):
-		atomic_print("<INFO> Listing route handlers:\n")
-		
-		for ele in self.handlers:
-			atomic_print(f"route = \"{ele}\", handler name = \"{self.handlers[ele].__name__}\"")
-		
-		atomic_print("\n")
+		atomic_print("\n".join([
+			"<INFO> Listing route handlers:\n",
+			"\n".join([f"route = \"{ele}\", handler name = \"{self.handlers[ele].__name__}\"" for ele in self.handlers]),
+			"\n"
+		]))
 
 	def routing(self, route:str):
 		if(route in self.handlers):
@@ -182,42 +247,3 @@ class pageHandler:
 PageHandlers = pageHandler()
 
 # =====================================================
-
-
-
-# req_ex = """POST / HTTP/1.1
-# Host: localhost:8080
-# Connection: keep-alive
-# Content-Length: 11
-# Cache-Control: max-age=0
-# sec-ch-ua: "Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"
-# sec-ch-ua-mobile: ?0
-# sec-ch-ua-platform: "Windows"
-# Upgrade-Insecure-Requests: 1
-# Origin: http://localhost:8080
-# Content-Type: application/x-www-form-urlencoded
-# User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
-# Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-# Sec-Fetch-Site: same-origin
-# Sec-Fetch-Mode: navigate
-# Sec-Fetch-User: ?1
-# Sec-Fetch-Dest: document
-# Referer: http://localhost:8080/login?
-# Accept-Encoding: gzip, deflate, br
-# Accept-Language: zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7
-
-# ID_PW=hello"""
-
-# if __name__ == "__main__":
-
-# 	# atomic_print(f"{parseRequest(request=req_ex)}")
-
-# 	msg = myHTTPmessage()
-
-# 	msg.setHeader(key="cookie", value="hello")
-
-# 	atomic_print(f"{msg.response(status='200', body='ACK!')}")
-
-# 	msg.setHeader(key="cookie", value="/rm")
-
-# 	atomic_print(f"{msg.response(status='200', body='ACK!')}")

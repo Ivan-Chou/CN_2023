@@ -17,6 +17,8 @@ MAXCONN = 512
 
 SERVER_PORT = 51966 # 0xCAFE
 
+COOKIE_NAME = "Coffee"
+
 # ===============
 
 # global var
@@ -25,8 +27,11 @@ toShutDown = False
 
 client_threads:list[threading.Thread] = [] # append client threads at here
 
-lock_UserTable = threading.Lock()
-UserTable = dict()
+lock_RegisterTable = threading.Lock()
+RegisterTable:dict[str, dict[str, str]] = dict() # dict[username, dict[info, value]]
+
+lock_OnlineTable = threading.Lock()
+OnlineTable:dict[str, str] = dict() # dict[username, call_addr]
 
 # ===============
 
@@ -44,8 +49,6 @@ def client_conn(ClientSock: socket.socket, ClientAddr: str): #ClientInfo:tuple[s
 	# log user info to global table ex. online
 
 	while not toShutDown:
-		httpMSG = myHTTPmessage.myHTTPmessage()
-
 		if(len(sel.select(1)) > 0): # since only monitor 1 socket => (has something == can read)
 			req_raw = ClientSock.recv(MSGSIZE_MAX)
 
@@ -66,7 +69,7 @@ def client_conn(ClientSock: socket.socket, ClientAddr: str): #ClientInfo:tuple[s
 			myMutltithread.atomic_print(toPrint)
 
 			# use PageHandler
-			ClientSock.sendall(myHTTPmessage.PageHandlers.routing(route=req["target"])(req, httpMSG))
+			ClientSock.sendall(myHTTPmessage.PageHandlers.routing(route=req["target"])(req))
 			
 	
 	# connection closed
@@ -90,50 +93,66 @@ def server_start(ServerAddr = "0.0.0.0"):
 
 	return ServerSock
 
-def getCookieVal(ID:str, PW:str):
+def getCookieHash(ID:str, PW:str):
 	return hashlib.sha256((ID + "|" + PW).encode()).hexdigest()
+
+def getUserIDFromCookie(cookie_val:str):
+	return cookie_val.split("-")[0]
+
+def getUserHashFromCookie(cookie_val:str):
+	return cookie_val.split("-")[1]
+
+def verifyUserByCookie(cookie_val:str):
+	"""
+	cookie form: (user id) + "-" + (hash)
+	"""
+
+	(userID, hash) = cookie_val.split("-")
+
+	return ((userID in RegisterTable) and (RegisterTable[userID]["hash"] == hash))
 
 # ===============
 
 # handlers
 
-def index(request:dict[str, str], httpMSG:myHTTPmessage.myHTTPmessage):
+def index(request:dict[str, str]):
+	httpMSG = myHTTPmessage.myHTTPmessage()
+	
 	body = ""
 	
 	if(request["method"] == "GET"):
 		with open("./webpage/html/index.html", mode="r", encoding="utf-8") as pageSrc:
-			# thinking to read in as binary?
 			body = pageSrc.read()
 
 	elif(request["method"] == "POST"):
+
 		post_val = myHTTPmessage.parseRequestBody(request["Content-Type"], request["body"])
 
-		with lock_UserTable:
+		with lock_RegisterTable:
 			if(post_val["act"] == "login"): # cookie name: Coffee
 				myMutltithread.atomic_print("<INFO> Get into post login")
 
-				if(post_val["ID"] in UserTable):
-					cookie_val = getCookieVal(post_val["ID"], post_val["PW"])
+				if(post_val["ID"] in RegisterTable):
+					cookie_hash = getCookieHash(post_val["ID"], post_val["PW"])
 					
 					if ("Cookie" in request):
 						clnt_cookies = myHTTPmessage.parseCookie(request["Cookie"])
 
-						if ("Coffee" in clnt_cookies):
-							cookie_val = clnt_cookies["Coffee"]
+						if (COOKIE_NAME in clnt_cookies):
+							cookie_hash = clnt_cookies[COOKIE_NAME].split("-")[1]
 
-					myMutltithread.atomic_print(f"<INFO> cookie_val = {cookie_val}")
+					myMutltithread.atomic_print(f"<INFO> cookie_hash = {cookie_hash}")
 					
-					if(cookie_val == UserTable[ post_val["ID"] ]["cookie"]):
+					if(cookie_hash == RegisterTable[ post_val["ID"] ]["hash"]):
 						# login success
-						# set cookie
-						body = "login success :)"
-						pass
 						
-						# redirect(not yet done)
-						# with open("./webpage/html/index.html", mode="r", encoding="utf-8") as pageSrc:
-						# 	# thinking to read in as binary?
-						# 	body = pageSrc.read()
-						# pass
+						# set cookie, redirection
+						httpMSG.setStatus("303")
+
+						httpMSG.setHeader({
+							"Location" : "/loggedin",
+							"Set-Cookie" : f"{COOKIE_NAME}={post_val['ID']}-{cookie_hash}; Expires={myHTTPmessage.HTTPdate(later=3600)}"
+						})
 					
 					else:
 						body = "Invalid ID & password :("
@@ -145,19 +164,21 @@ def index(request:dict[str, str], httpMSG:myHTTPmessage.myHTTPmessage):
 				# registration
 				case = 0
 
-				cookie_val = getCookieVal(post_val["ID"], post_val["PW"])
+				cookie_hash = getCookieHash(post_val["ID"], post_val["PW"])
 
-				if(post_val["ID"] in UserTable):
+				if(post_val["ID"] in RegisterTable):
 					case = 1
 				else:
 					# all ok => register
-					UserTable[ post_val["ID"] ] = {
+					RegisterTable[ post_val["ID"] ] = {
 						"ID" : post_val["ID"],
-						"cookie": cookie_val
+						"hash": cookie_hash
 						# don't save password, check hash to verify an user
 					}
 
 				body = json.dumps({"result" : str(case)})
+
+				httpMSG.setContentType("application/json")
 			
 			else:
 				body=f"Invalid ID & password submit: {post_val['act']}"
@@ -166,19 +187,60 @@ def index(request:dict[str, str], httpMSG:myHTTPmessage.myHTTPmessage):
 		# error
 		body = f"Invalid request method: {request['method']}"
 
-	return httpMSG.response(status="200", body=body)
+	return httpMSG.response(body=body)
 myHTTPmessage.PageHandlers.register("/", index)
 
+def loggedin(request:dict[str, str]):
+	httpMSG = myHTTPmessage.myHTTPmessage()
 
-def register():
-	# sync. table
-	pass
-# myHTTPmessage.PageHandlers.register()
+	body = ""
 
-def login():
-	# HTTP Set-Cookie header
-	pass
-# myHTTPmessage.PageHandlers.register()
+	if("Cookie" not in request):
+		httpMSG.setStatus("403")
+
+		body = "You have to log in to access the page"
+
+		return httpMSG.response(body=body)
+	
+	cookies = myHTTPmessage.parseCookie(request["Cookie"])
+
+	if(f"{COOKIE_NAME}" not in cookies) or (not verifyUserByCookie(cookies[COOKIE_NAME])):
+		httpMSG.setStatus("403")
+
+		body = "Invalid or unexisted login cookie for CAFE"
+
+		return httpMSG.response(body=body)
+
+	# => valid user => log in table update
+	userID = getUserIDFromCookie(cookies[COOKIE_NAME])
+
+	with lock_OnlineTable:
+		if(userID not in OnlineTable):
+			OnlineTable[userID] = "" # temporary not know connection
+
+	if(request["method"] == "GET"):
+		with open("./webpage/html/loggedin.html", mode="r", encoding="utf-8") as file:
+			body = file.read()
+
+	elif(request["method"] == "POST"):
+		post_val = myHTTPmessage.parseRequestBody(request["Content-Type"], request["body"])
+
+		if(post_val["act"] == "logout"):
+			# clear from OnlineTable
+			with lock_OnlineTable:
+				OnlineTable.pop(userID)
+			
+			# redirect to "/"
+			httpMSG.setStatus("303")
+			
+			httpMSG.setHeader({
+				"Location": "/"
+			})
+	else:
+		body = f"Invalid request method: {request['method']}"
+	
+	return httpMSG.response(body=body)
+myHTTPmessage.PageHandlers.register("/loggedin", loggedin)
 
 def meeting():
 	# Socket.io
@@ -192,6 +254,13 @@ def meeting():
 
 if __name__ == "__main__": # main func
 	ServerSock = server_start()
+
+	myMutltithread.atomic_print("\n".join([
+		"\n # ============================================== # \n",
+		"<DEBUG> DefaultFileUtil:",
+		"\n".join(f"{key}: header = {myHTTPmessage.DefaultFileUtil[key]['response'].header}" for key in myHTTPmessage.DefaultFileUtil),
+		"\n # ============================================== # \n"
+	]))
 
 	# check if handlers are correct
 	myHTTPmessage.PageHandlers.listHandlers()
@@ -226,12 +295,20 @@ if __name__ == "__main__": # main func
 				if(cmd == "stop"):
 					myMutltithread.atomic_print("<INFO> Server is going to shut down...")
 					toShutDown = True
-				elif(cmd == "showuser"):
-					with lock_UserTable:
+				elif(cmd == "showreg"):
+					with lock_RegisterTable:
 						myMutltithread.atomic_print("\n".join([
 							"\n # ============================================== # \n",
-							"<INFO> Showing User Table:\n",
-							"\n".join([f"{usr}: {UserTable[usr]}" for usr in UserTable]),
+							"<INFO> Showing Registration Table:\n",
+							"\n".join([f"{usr}: {RegisterTable[usr]}" for usr in RegisterTable]),
+							"\n # ============================================== # \n"
+						]))
+				elif(cmd == "showonline"):
+					with lock_RegisterTable:
+						myMutltithread.atomic_print("\n".join([
+							"\n # ============================================== # \n",
+							"<INFO> Showing Online User Table:\n",
+							"\n".join([f"{usr}: {OnlineTable[usr]}" for usr in OnlineTable]),
 							"\n # ============================================== # \n"
 						]))
 				else:
