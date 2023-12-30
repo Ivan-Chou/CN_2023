@@ -7,10 +7,15 @@
 		<link rel="stylesheet" type="text/css" href="styles_in.css">
 		<link rel="stylesheet" type="text/css" href="styles_board.css">
 		<link rel="stylesheet" type="text/css" href="styles_postarea.css">
+		<link rel="stylesheet" type="text/css" href="styles_callarea.css">
 		
 		<script type="text/javascript" src="script_board.js" defer></script>
 		<script type="text/javascript" src="script_in.js" defer></script>
-
+		<!-- socket.io, peer.js are used for streaming -->
+		<script type="text/javascript" src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-mZLF4UVrpi/QTWPA7BjNPEnkIfRFn4ZEO3Qt/HFklTJBj/gBOV8G3HcKn4NfQblz" crossorigin="anonymous" defer></script>
+		<script type="text/javascript" src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js" defer></script>
+		<script type="text/javascript" src="script_call.js" defer></script>
+		
 		<title>CAFE web</title>
 	</head>
 
@@ -41,7 +46,33 @@
 					<button type="button" id="post_submit">發文</button>
 				</div>
 
-				<div id="call_area">...</div>
+				<div id="call_area">
+					<div id="roomSelection">
+						<div id="createRoom">
+							<div class="room_btn" id="btn_create">創建新房間</div>
+						</div>
+						<div id="joinRoom">
+							<input type="text" id="join_roomID" placeholder="-- 輸入房號 --"/>
+							<div class="room_btn" id="btn_join">加入特定房間</div>
+						</div>
+						<div id="selectRoomType">
+							<div class="roomTypeBlock">
+								<input type="radio" name="roomType" value="V" id="roomType_V"/>
+								<label for="roomType_V">視訊</label>
+							</div>
+							<div class="roomTypeBlock">
+								<input type="radio" name="roomType" value="P" id="roomType_P"/>
+								<label for="roomType_P">電話</label>
+							</div>
+						</div>
+					</div>
+
+					<div id="cameraDisplay">
+						<span id="roomID">(roomID)</span>
+						<div id="camera_hook"></div>
+						<div id="camera_on">關閉鏡頭</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</body>

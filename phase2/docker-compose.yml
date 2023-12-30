@@ -13,6 +13,7 @@ services:
 
         ports:
             - "51966:51966"
+            - "51967:51967"
 
         volumes:
             # (src) : (dest)

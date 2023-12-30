@@ -126,7 +126,6 @@ class myHTTPmessage:
 			"Connection"      : "Keep-Alive"
 		}
 		if(init_header != {}):
-			atomic_print(f"<DEBUG> init_header not null : {init_header}")
 			self.header.update(init_header)
 
 	def setStatus(self, status:str):

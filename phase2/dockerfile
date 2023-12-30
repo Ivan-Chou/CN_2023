@@ -1,7 +1,11 @@
 FROM ubuntu:22.04
 
-RUN mkdir -p /phase2 && apt-get update && apt-get install -y python3.11
+RUN mkdir -p /phase2 
+RUN apt-get update 
+RUN apt-get install -y python3.11 python3-pip
+RUN pip3 install Flask
+RUN pip3 install Flask-SocketIO 
 
 WORKDIR /phase2
 
-CMD ["python3.11", "./server.py"]
+# CMD ["python3.11", "./server.py"]

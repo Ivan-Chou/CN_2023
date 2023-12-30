@@ -5,7 +5,8 @@ import sys
 import json
 import hashlib
 
-from mylib import myHTTPmessage, myMutltithread
+from mylib import myHTTPmessage, myMutltithread, myCall
+from mylib.myUserData import *
 
 # ===============
 
@@ -27,14 +28,6 @@ toShutDown = False
 
 client_threads:list[threading.Thread] = [] # append client threads at here
 
-lock_RegisterTable = threading.Lock()
-RegisterTable:dict[str, dict[str, str]] = dict() # dict[username, dict[info, value]]
-
-lock_OnlineTable = threading.Lock()
-OnlineTable:dict[str, str] = dict() # dict[username, call_addr]
-
-lock_PostTable = threading.Lock()
-PostTable:list[dict[str, str]] = []
 
 # ===============
 
@@ -225,9 +218,9 @@ def loggedin(request:dict[str, str]):
 	# => valid user => log in table update
 	userID = getUserIDFromCookie(cookies[COOKIE_NAME])
 
-	with lock_OnlineTable:
-		if(userID not in OnlineTable):
-			OnlineTable[userID] = "" # temporary not know connection
+	# with lock_OnlineTable:
+	# 	if(userID not in OnlineTable):
+	# 		OnlineTable[userID] = "" # temporary not know connection
 
 	if(request["method"] == "GET"):
 		with open("./webpage/html/loggedin.html", mode="r", encoding="utf-8") as file:
@@ -238,8 +231,8 @@ def loggedin(request:dict[str, str]):
 
 		if(post_val["act"] == "logout"):
 			# clear from OnlineTable
-			with lock_OnlineTable:
-				OnlineTable.pop(userID)
+			# with lock_OnlineTable:
+			# 	OnlineTable.pop(userID)
 			
 			# redirect to "/"
 			httpMSG.setStatus("303")
@@ -283,15 +276,11 @@ def meeting():
 if __name__ == "__main__": # main func
 	ServerSock = server_start()
 
-	myMutltithread.atomic_print("\n".join([
-		"\n # ============================================== # \n",
-		"<DEBUG> DefaultFileUtil:",
-		"\n".join(f"{key}: header = {myHTTPmessage.DefaultFileUtil[key]['response'].header}" for key in myHTTPmessage.DefaultFileUtil),
-		"\n # ============================================== # \n"
-	]))
-
 	# check if handlers are correct
 	myHTTPmessage.PageHandlers.listHandlers()
+
+	CallServer = threading.Thread(target=myCall.callStartup, daemon=True)
+	CallServer.start()
 
 	# main thread should handle STDIN (for admin command) and server socket(accept new connections)
 	sel = selectors.DefaultSelector()
@@ -347,6 +336,7 @@ if __name__ == "__main__": # main func
 							"\n".join([f"Author: {post['author']}\nTime: {post['time']}\nContent: {post['content']}\n" for post in PostTable]),
 							"\n # ============================================== # \n"
 						]))
+				# elif(cmd == "show")
 				else:
 					myMutltithread.atomic_print(f"<ERR> Unknown command : {cmd}")
 
@@ -359,6 +349,8 @@ if __name__ == "__main__": # main func
 
 	for conn in client_threads:
 		conn.join()
+
+	# myMutltithread.atomic_print(f"<INFO> CallServer is_alive = {CallServer.is_alive()}")
 
 	ServerSock.close()
 
