@@ -55,20 +55,20 @@ Note: Please make sure that you have [docker][1] in advance.
 > bash : ```./start_docker.sh```  
 > powershell : ```.\start_docker.ps1```  
 
-The Server should be run on port 51966 (Web Server) and 51967 (Socket.io handler for phoning)  
-
 ### Run the program
 
 #### Server
 
-After get into docker container, run ```python3 ./server.py``` or ```./run.sh```  
-  
+After get into docker container, run ```./run.sh```  
+
+The Server should run on port 51966 (the main URL for connection), 51967 (Web Server) and 51968 (Socket.io handler for phoning), where the latter 2 run isolatedly inside the docker (not accessible from the outside).  
+
 PS. There might be some "newline" problem due to my poor setting of '.gitattribute', please fix them by ```sed``` or other tools you like. If you would like to help me fix the problem, please feel free to put messages on github (or put a request).  
 
 #### Client
 
-Connect to ```localhost:51966```, the webpage should be there.  
-  
-The Socket.io-based phoning system uses port 51967, but it should include no manual settings to using it.  
+Connect to ```https://localhost:51966```, the webpage should be there.
+
+By using nginx as reverse proxy, the webpage uses "https" and "persistent http", and has a single port for clients to use the whole services.  
 
 [1]: https://www.docker.com/get-started/  

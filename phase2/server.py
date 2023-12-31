@@ -16,7 +16,7 @@ MSGSIZE_MAX = 1024
 
 MAXCONN = 512
 
-SERVER_PORT = 51966 # 0xCAFE
+SERVER_PORT = 51967 # 0xCAFE + 1, 0xCAFE used by nginx (https)
 
 COOKIE_NAME = "Coffee"
 

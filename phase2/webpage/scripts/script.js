@@ -15,7 +15,7 @@ document.getElementById("reg").addEventListener("click", () => {
         return
     }
 
-    fetch("http://localhost:51966/", {
+    fetch("https://localhost:51966/", {
         method: "POST",
         target: "/",
         headers: {

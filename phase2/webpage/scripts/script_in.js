@@ -45,7 +45,7 @@ document.getElementById("btn_call").addEventListener("click", () => {
 })
 
 document.getElementById("post_submit").addEventListener("click", () => {
-    fetch("http://localhost:51966/loggedin", {
+    fetch("https://localhost:51966/loggedin", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

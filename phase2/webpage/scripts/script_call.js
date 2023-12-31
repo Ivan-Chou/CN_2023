@@ -1,6 +1,8 @@
 // reference: https://www.youtube.com/watch?v=DvlyzDZDEq4
 // global var.
-const sock = io.connect("http://localhost:51967")
+const sock = io("https://localhost:51966", {
+    path: "/socket.io"
+})
 
 const call_area = document.getElementById("call_area") || areas[2]
 const roomSelection = call_area.querySelector("#roomSelection")
@@ -16,6 +18,7 @@ const peer_conns = {} // media connection from others
 const peer_cams = {} // user_cam elements from others
 
 let cam_on = true; // whether camera of this client is operating
+let isPhone = false; // whether the room is "no img" phone call
 
 let currRoomID = "" // the room ID of current room
 
@@ -33,6 +36,14 @@ function setCameraOn(user_cam){
     user_cam.querySelector(".camera").style.height = "90%"
     
     user_cam.querySelector(".NoImg").style.display = "none"
+}
+
+function setCameraPhone(user_cam){
+    user_cam.querySelector(".camera").style.height = "0px"
+
+    user_cam.querySelector(".NoImg").style.display = "none"
+
+    user_cam.querySelector(".username_of_cam").style.height = "100%"
 }
 
 function createUserCam(userID){
@@ -88,7 +99,11 @@ function bindUserCam(userID, conn){
 
         addVideoStream(peer_cams[userID], vidStream)
 
-        if(other_cam_stat == ""){
+        if(isPhone){
+            // other_cam_stat should only used when isPhone == false (i.e. a visual stream)
+            setCameraPhone(peer_cams[userID])
+        }
+        else if(other_cam_stat == ""){
             setCameraOn(peer_cams[userID])
         }
     })
@@ -112,10 +127,12 @@ function connectToNewUser(userID) {
 
     bindUserCam(userID, peer_conns[userID])
 
-    sock.emit((cam_on ? "cam_on" : "cam_off"), JSON.stringify({
-        "userID" : peer_self.id,
-        "roomID" : currRoomID
-    }))
+    if(!isPhone){
+        sock.emit((cam_on ? "cam_on" : "cam_off"), JSON.stringify({
+            "userID" : peer_self.id,
+            "roomID" : currRoomID
+        }))
+    }
 }
 
 function genRoomId(){
@@ -130,14 +147,43 @@ function genRoomId(){
     return ret.join("-")
 }
 
+function setRoomType(){
+    let roomType = roomSelection.querySelectorAll("input[name='roomType']")
+
+    let room_type = ""
+
+    for (const ele of roomType){
+        if(ele.checked){
+            room_type = ele.value
+            break
+        }
+    }
+
+    if(room_type == "P"){
+        isPhone = true
+    }
+    else if(room_type == "V"){
+        isPhone = false
+    }
+    else{
+        let err = (room_type == "" ? "請選擇房型 (視訊/電話) ！！" : `房型錯誤！！\n沒有 ${room_type} 這個選項！！`) 
+        alert(`${err}`)
+    }
+
+    return room_type
+}
+
 function setCamera(roomID){
     navigator.mediaDevices.getUserMedia({
-        video: true, // can set false for phone
+        video: !isPhone, // can set false for phone
         audio: true
     }).then(stream => {
-        for(let i = 0; i < stream.getVideoTracks().length; i++){
-            stream_self.addTrack(stream.getVideoTracks()[i])
+        if(!isPhone){    
+            for(let i = 0; i < stream.getVideoTracks().length; i++){
+                stream_self.addTrack(stream.getVideoTracks()[i])
+            }
         }
+
         for(let i = 0; i < stream.getAudioTracks().length; i++){
             stream_self.addTrack(stream.getAudioTracks()[i])
         }
@@ -146,30 +192,37 @@ function setCamera(roomID){
 
         cameraDisplay.querySelector("#camera_hook").appendChild(camera_self)
 
-        if(stream_self.getVideoTracks().length == 0){
-            setCameraOff(camera_self)
-            cam_on = false
+        if(!isPhone){
+            if(stream_self.getVideoTracks().length == 0){
+                setCameraOff(camera_self)
+                cam_on = false
+            }
+            else{
+                setCameraOn(camera_self)
+                cam_on = true
+            }
         }
         else{
-            setCameraOn(camera_self)
-            cam_on = true
+            setCameraPhone(camera_self)
         }
 
         // wait after stream_self settled
         sock.emit("join_room", JSON.stringify({
             "roomID": roomID,
-            "userID": userID // should be username
+            "userID": peer_self.id // should be username
         }))
     }).catch(err => {
         console.log(err);
     })
 
-    userID = peer_self.id
-
     roomSelection.remove()
     call_area.appendChild(cameraDisplay)
 
     cameraDisplay.querySelector("#roomID").textContent = roomID;
+
+    if(isPhone){
+        cameraDisplay.querySelector("#camera_on").remove()
+    }
 }
 
 // binding
@@ -227,6 +280,8 @@ sock.on("receiver_ready", data => {
 })
 
 peer_self.on("call", caller_conn => {
+    console.log(`called by ${caller_conn.peer}`)
+
     // caller_conn.answer(stream_self)
     if(peer_conns[caller_conn.peer] == "receiver_ready"){
         // console.log("answer after call & ready, time = " + Date.now())
@@ -240,14 +295,26 @@ peer_self.on("call", caller_conn => {
 
 call_area.querySelector("#btn_create").addEventListener("click", () => {
     currRoomID = genRoomId()
-    setCamera(currRoomID)
+
+    let room_type = setRoomType()
+
+    // room ID : "[P|V]:..." => don't mix the 2 systems together
+    if(room_type == "P" || room_type == "V"){
+        currRoomID = room_type + ":" + currRoomID
+        setCamera(currRoomID)
+    }
 })
 
 call_area.querySelector("#btn_join").addEventListener("click", () => {
     currRoomID = roomSelection.querySelector("#join_roomID").value;
     
     if(currRoomID != ""){
-        setCamera(currRoomID)
+        let room_type = setRoomType()
+        
+        if(room_type == "P" || room_type == "V"){
+            currRoomID = room_type + ":" + currRoomID
+            setCamera(currRoomID)
+        }
     }
     else{
         alert("房號不能為空！！")

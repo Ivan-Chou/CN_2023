@@ -40,7 +40,7 @@ function appendPost(author, time, content) {
 
 function renewBulletin(){
     // fetch new posts
-    fetch("http://localhost:51966", {
+    fetch("https://localhost:51966", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
